@@ -1,0 +1,87 @@
+local uis = game:GetService("UserInputService")
+local rs = game:GetService("RunService")
+wait(5)
+local myPlayer = game.Players.LocalPlayer
+local myChar = myPlayer.Character
+local myHRP = myChar:WaitForChild("HumanoidRootPart")
+local camera = game.Workspace.CurrentCamera
+local LastTapped, Tapped = false, false
+local flyUpSpeed = 20
+local flyDownSpeed = 20
+local wdown = false
+local toggle = false
+local flying = false
+local speed = 0.5
+local bp = nil
+local bg = nil
+local bodyVel = nil
+
+
+
+function fly()
+	bp = Instance.new("BodyPosition",myHRP)
+	bp.MaxForce = Vector3.new()
+	bp.D = 100
+	bg = Instance.new("BodyGyro",myHRP)
+	bg.MaxTorque = Vector3.new()
+	bg.D = 100
+	flying = true
+	bp.Position = myHRP.Position + Vector3.new(0,10,0)
+	bp.MaxForce = Vector3.new(400000,400000,400000)
+	bg.MaxTorque = Vector3.new(400000,400000,400000)
+end
+while flying do
+	rs.RenderStepped:wait()
+	bp.Position = myHRP.Position +((myHRP.Position - camera.CFrame.p).unit * speed)
+	bg.CFrame = CFrame.new(camera.CFrame.p, myHRP.Position)
+end
+uis.InputBegan:connect(function(Input)
+	if Input.KeyCode == Enum.KeyCode.W and flying == true and wdown == false then
+		if toggle == false then
+			bp:Destroy()
+			wdown = true
+			bodyVel = Instance.new("BodyVelocity",myHRP)
+			bodyVel.MaxForce = Vector3.new(math.huge,math.huge,math.huge)
+			while flying and wait() do
+				bodyVel.Velocity = camera.CFrame.LookVector*speed*100
+			end
+		end
+
+	end
+end)
+
+uis.InputEnded:Connect(function(Input)
+	if Input.KeyCode == Enum.KeyCode.W and flying == true and wdown == true then
+		if toggle == false then
+			wdown = false
+			bodyVel:Destroy()
+			bp = Instance.new("BodyPosition",myHRP)
+			bp.MaxForce = Vector3.new(math.huge,math.huge,math.huge)
+			bp.D = 100
+			bp.Position = myHRP.Position
+		end
+	end
+end)
+
+function endFlying()
+	bp:Destroy()
+	bg:Destroy()
+	flying = false
+end
+
+
+uis.InputBegan:connect(function(input)
+	if input.KeyCode == Enum.KeyCode.V then
+		if Tapped == false then
+			Tapped = true
+		else
+			LastTapped = true
+			Tapped = false
+			if not flying then
+				fly()
+			else
+				endFlying()
+			end
+		end
+	end
+end)
